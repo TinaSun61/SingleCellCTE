@@ -1,0 +1,110 @@
+---
+title: "batch1-4_preQC"
+output: html_document
+date: "2026-01-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+## load singleCellTK
+library(singleCellTK, lib="/restricted/projectnb/camplab/home/jiaqi/R/x86_64-pc-linux-gnu-library/4.4")
+```
+
+Read in the combined sce object for batch1-4
+
+```{r}
+
+sce_all <-readRDS("/restricted/projectnb/cteseq/data/CTE_Single_Cell/processed snRNA-seq batches/sce_1234_QC_clustered.rds")
+
+```
+
+
+```{r}
+table(sce_all$batch)
+```
+
+
+```{r}
+table(sce_all$sample)
+```
+
+
+```{r}
+print(sce_all)
+```
+
+
+
+UMAP - already ran
+
+```{r}
+# UMAP builds a k-NN graph in that PC space and then lays the cells out in 2D.
+# sce_all <- runSeuratUMAP(inSCE = sce_all, useReduction = "pca", reducedDimName = "seuratUMAP", dims = 15)
+
+```
+
+
+Plot PCA result by clusters
+
+```{r}
+# sce_all <- runSeuratFindClusters(inSCE = sce_all, useAssay = "seuratScaledData", useReduction = "pca", dims = 15, algorithm = "louvain")
+plotSeuratReduction(sce_all, "pca", showLegend = TRUE)
+
+```
+
+
+plot UMAP result by clusters
+
+```{r}
+plotSeuratReduction(sce_all, "umap", showLegend = TRUE)
+```
+
+
+
+plot sce Umap by batch
+```{r}
+library(scater)
+plotReducedDim(sce_all, dimred = "seuratUMAP", colour_by = "batch", point_size = 0.8)
+
+```
+
+
+
+
+
+#plot sce UMAP by doublets
+```{r}
+library(scater)
+plotReducedDim(sce_all, dimred = "seuratUMAP", colour_by = "scDblFinder_doublet_score", point_size = 1)+
+  scale_colour_gradientn(
+  colours = c("grey80", "salmon", "red2"),  # tweak if you want stronger contrast,
+  name="Doublet score"
+)
+
+```
+
+
+UMAP by Contimanation
+
+```{r}
+#grep("scDblFinder", colnames(colData(sce)), value = TRUE)
+
+plotReducedDim(sce_all, dimred = "seuratUMAP", colour_by = "decontX_contamination")->p
+p + scale_colour_gradientn(
+  colours = c("grey80", "mediumpurple1", "blue2"),  # tweak if you want stronger contrast
+  name    = "Ambient\nContamination Score"
+)
+
+```
+
+
+
+
+
+
+
