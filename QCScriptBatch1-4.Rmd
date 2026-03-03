@@ -104,6 +104,323 @@ p + scale_colour_gradientn(
 
 
 
+# HEATMAP by cluster 
+
+```{r}
+library(SingleCellExperiment)
+library(scuttle)        
+library(ComplexHeatmap)
+library(viridis)
+
+cluster_col   <- "Seurat_louvain_Resolution0.8"
+cluster_order <- as.character(0:35)
+
+# marker genes (same as the paper)
+markers <- c(
+  "SLC17A7","RALYL","GAD1","GAD2","COL9A1","LHFPL3",
+  "CD69","IL7R","MBP","PLP1","PTPRC","CX3CR1",
+  "CLDN5","NOSTRIN","PDGFRB","LAMA2","GFAP","ALDH1L1"
+)
+markers <- intersect(markers, rownames(sce_all))   # keep only genes that exist
+
+
+# subset to chosen clusters, "Seurat_louvain_Resolution0.8" is stored in sce, coldata
+sce_sub_heat <- sce_all[, sce_all[[cluster_col]] %in% cluster_order] 
+
+## ---- use seuratNormData as the "counts" assay ----
+sce_tmp <- sce_sub_heat
+assay(sce_tmp, "counts") <- assay(sce_tmp, "seuratNormData")
+
+# 1) average expression per cluster
+
+avg <- aggregateAcrossCells(
+  sce_tmp,
+  ids        = sce_tmp[[cluster_col]], #Groups cells by their cluster label
+  statistics = "mean" #Computes the mean of the (normalized) expression per gene within each cluster.
+)
+
+# aggregated assay is named "mean"
+avg_mat <- assay(avg, "counts")[markers, , drop = FALSE] #Subsets to the markers rows and all cluster columns.
+
+# reorder columns 
+avg_mat <- avg_mat[, cluster_order, drop = FALSE]
+
+# 2) row-wise scaling (like "Scaled expression" in the paper)
+
+
+# Each gene (row) has been z-scored across clusters.
+scaled_mat <- t(scale(t(as.matrix(avg_mat))))
+
+# 3) heatmap: markers (rows) × clusters (cols)
+Heatmap(
+  scaled_mat,
+  col               = viridis::mako(50, direction = -1),
+  cluster_rows      = FALSE,
+  cluster_columns   = FALSE,       
+  row_order         = markers,
+  rect_gp          = gpar(col = "white", lwd = 0.3),  
+  column_order      = cluster_order,
+  row_names_side    = "left",
+  column_names_side = "top",
+  column_names_rot  = 45,
+  heatmap_legend_param = list(
+    title      = "Scaled expression",
+    direction  = "horizontal"
+  )
+)
+
+```
+
+
+
+
+# DOT PLOT by cluster
+
+
+```{r}
+library(SingleCellExperiment)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(viridis)
+
+cluster_col   <- "Seurat_louvain_Resolution0.8"
+cluster_order <- as.character(0:35)  
+
+markers <- c(
+  "SLC17A7","RALYL","GAD1","GAD2","COL9A1","LHFPL3",
+  "CD69","IL7R","MBP","PLP1","PTPRC","CX3CR1",
+  "CLDN5","NOSTRIN","PDGFRB","LAMA2","GFAP","ALDH1L1"
+)
+markers <- intersect(markers, rownames(sce_all))
+
+## 1) Subset to chosen clusters
+sce_sub <- sce_all[, sce_all[[cluster_col]] %in% cluster_order]
+
+## 2) Pull expression matrix (log-normalized)
+# Extracts the "seuratNormData" assay (usually log-normalized counts from Seurat).
+# Subsets to marker genes only.
+
+expr <- assay(sce_sub, "seuratNormData")[markers, , drop = FALSE]
+
+library(dplyr)
+## 3) Long format with cluster labels
+df_long <- as.matrix(expr) |>
+  t() |>
+  as.data.frame() |>
+  mutate(cluster = sce_sub[[cluster_col]]) |> 
+  pivot_longer(
+    cols      = all_of(markers),
+    names_to  = "gene",
+    values_to = "expr"
+  )
+
+df_long$cluster <- factor(df_long$cluster, levels = cluster_order)
+df_long$gene    <- factor(df_long$gene,    levels = rev(markers))  # top-to-bottom like heatmap
+
+## 4) Summarise per gene × cluster
+dot_df <- df_long |>
+  group_by(cluster, gene) |>
+  summarise(
+    avg_expr = mean(expr),
+    pct_expr = mean(expr > 0),   # fraction of cells expressing
+    .groups  = "drop"
+  ) |>
+  group_by(gene) |>
+  mutate(
+    scaled_expr = (avg_expr - mean(avg_expr)) / sd(avg_expr)  # row-wise scaling
+  ) |>
+  ungroup()
+
+library(viridis)
+
+ggplot(dot_df, aes(x = cluster, y = gene)) +
+  geom_point(aes(size = pct_expr, colour = scaled_expr)) +
+  scale_size(range = c(1, 6), name = "Fraction expressing") +
+  scale_colour_viridis_c(
+    option    = "viridis",   # matches the attached plot
+    direction = 1,
+    name      = "Avg scaled\nexpression"
+  ) +
+  labs(x = "Cluster", y = "Marker gene") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid  = element_blank()
+  )
+
+
+
+```
+
+
+
+
+# RE-organized Major Cell Types Heatmap
+```{r}
+library(SingleCellExperiment)
+library(scuttle)       
+library(ComplexHeatmap)
+library(viridis)
+
+cluster_col   <- "Seurat_louvain_Resolution0.8"
+cluster_ids   <- as.character(0:35)
+
+# marker genes (same as the paper)
+markers <- c(
+  "SLC17A7","RALYL","GAD1","GAD2","COL9A1","LHFPL3",
+  "CD69","IL7R","MBP","PLP1","PTPRC","CX3CR1",
+  "CLDN5","NOSTRIN","PDGFRB","LAMA2","GFAP","ALDH1L1"
+)
+markers <- intersect(markers, rownames(sce_all))   # keep only genes that exist
+
+## 1) Define cluster → major cell-type mapping (using your labels)
+
+cluster_to_type <- setNames(rep(NA_character_, length(cluster_ids)), cluster_ids)
+
+
+cluster_to_type[c("5","8","10","11", "12", "13", "14", "15","16","18","28","29")] <- "Exc"
+
+cluster_to_type[c("6","7","21","24")] <- "Inh"
+
+cluster_to_type[c("4","34","35")] <- "OPCs"
+
+cluster_to_type["31"] <- "T_cells"
+
+cluster_to_type[c("1","0","23","30","32")] <- "Oligo"
+
+cluster_to_type[c("9","20")] <- "Micro"
+
+cluster_to_type[c("17", "26")] <- "Endo"
+
+cluster_to_type[c("22","25","27")] <- "Mural"
+
+cluster_to_type[c("3","2","33", "19")] <- "Astro"
+
+## 2) Subset to cells that belong to one of these labeled clusters
+
+sce_sub_heat <- sce_all[, sce_all[[cluster_col]] %in% names(cluster_to_type)]
+
+major_type_per_cell <- cluster_to_type[ as.character(sce_sub_heat[[cluster_col]]) ]
+keep <- !is.na(major_type_per_cell)
+
+sce_sub_heat       <- sce_sub_heat[, keep]
+major_type_per_cell <- major_type_per_cell[keep]
+
+## 3) Use seuratNormData as "counts" for aggregation
+
+sce_tmp <- sce_sub_heat
+assay(sce_tmp, "counts") <- assay(sce_tmp, "seuratNormData")
+
+## 4) Average expression per *major cell type* (not per cluster)
+
+avg_type <- aggregateAcrossCells(
+  sce_tmp,
+  ids        = major_type_per_cell,  # group by major cell type
+  statistics = "mean"
+)
+
+avg_mat <- assay(avg_type, "counts")[markers, , drop = FALSE]
+
+# Order columns by major cell-type order
+type_order <- c("Exc","Inh","OPCs", "T_cells", "Oligo","Micro", "Endo","Mural","Astro")
+avg_mat <- avg_mat[, intersect(type_order, colnames(avg_mat)), drop = FALSE]
+
+## 5) Row-wise scaling (z-score per gene across major types)
+
+scaled_mat <- t(scale(t(as.matrix(avg_mat))))
+
+## 6) Heatmap: markers (rows) × major cell types (cols)
+
+Heatmap(
+  scaled_mat,
+  col               = viridis::mako(50, direction = -1),
+  cluster_rows      = FALSE,
+  cluster_columns   = FALSE,
+  row_order         = markers,
+  rect_gp           = gpar(col = "white", lwd = 0.3),
+  column_order      = colnames(scaled_mat),   # major types in chosen order
+  row_names_side    = "left",
+  column_names_side = "top",
+  column_names_rot  = 45,
+  heatmap_legend_param = list(
+    title      = "Scaled expression",
+    direction  = "horizontal"
+  )
+)
+
+
+```
+
+
+
+
+
+# RE-organized Major Cell Types DOT PLOT
+
+```{r}
+
+sce_sub <- sce_all[, sce_all[[cluster_col]] %in% cluster_ids]
+
+major_type_per_cell <- cluster_to_type[ as.character(sce_sub[[cluster_col]]) ]
+keep <- !is.na(major_type_per_cell)
+
+sce_sub             <- sce_sub[, keep]
+major_type_per_cell <- major_type_per_cell[keep]
+
+## 3) Expression matrix (log-normalized)
+
+expr <- assay(sce_sub, "seuratNormData")[markers, , drop = FALSE]
+
+## 4) Long format with major cell-type labels
+
+df_long <- as.matrix(expr) |>
+  t() |>
+  as.data.frame() |>
+  mutate(major_type = major_type_per_cell) |>
+  pivot_longer(
+    cols      = all_of(markers),
+    names_to  = "gene",
+    values_to = "expr"
+  )
+
+type_order <- c("Exc","Inh","OPCs", "T_cells", "Oligo","Micro","Endo","Mural","Astro")
+df_long$major_type <- factor(df_long$major_type, levels = type_order)
+df_long$gene       <- factor(df_long$gene, levels = rev(markers))
+
+## 5) Summarise per gene × major cell type
+
+dot_df <- df_long |>
+  group_by(major_type, gene) |>
+  summarise(
+    avg_expr = mean(expr),
+    pct_expr = mean(expr > 0),
+    .groups  = "drop"
+  ) |>
+  group_by(gene) |>
+  mutate(
+    scaled_expr = (avg_expr - mean(avg_expr)) / sd(avg_expr)
+  ) |>
+  ungroup()
+
+## 6) Dot plot: major cell type on x-axis
+
+ggplot(dot_df, aes(x = major_type, y = gene)) +
+  geom_point(aes(size = pct_expr, colour = scaled_expr)) +
+  scale_size(range = c(1, 6), name = "Fraction expressing") +
+  scale_colour_viridis_c(
+    option    = "viridis",
+    direction = 1,
+    name      = "Avg scaled\nexpression"
+  ) +
+  labs(x = "Major cell type", y = "Marker gene") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid  = element_blank()
+  )
+
+```
 
 
 
