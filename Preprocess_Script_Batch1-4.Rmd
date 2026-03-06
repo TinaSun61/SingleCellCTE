@@ -1,0 +1,416 @@
+---
+title: "Preprocess_Script_Batch1-4"
+output: html_document
+date: "2026-03-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# load singleCellTK
+
+```{r}
+library(singleCellTK)
+```
+
+
+
+# Read in SCE1
+
+```{r}
+base_dir <- "/restricted/projectnb/camplab/home/jiaqi/CTE_Batch1/outs/per_sample_outs"
+
+# This is the *parent* directory where each sample lives
+cellRangerDirs <- base_dir
+
+sampleDirs <- list(c("K1010_DLF","K1107_DLF","K1535_DLF","K1571_DLF","K1308_DLF","K1322_DLF","K1461_DLF","K0551_DLF","K1244_DLF","K0933_DLF","K1396_DLF","K1217_DLF","K0982_DLF","K0509_DLF","K1475_DLF","K1058_DLF"))
+
+sampleNames <-c("K1010_DLF","K1107_DLF","K1535_DLF","K1571_DLF","K1308_DLF","K1322_DLF","K1461_DLF","K0551_DLF","K1244_DLF","K0933_DLF","K1396_DLF","K1217_DLF","K0982_DLF","K0509_DLF","K1475_DLF","K1058_DLF")
+
+sampleDirs
+
+```
+
+
+```{r}
+# 2) import into a single SCE ----------------------------------------------
+
+sce1 <- importCellRanger(
+  cellRangerDirs = cellRangerDirs,
+  sampleDirs      = sampleDirs,
+  sampleNames     = sampleNames,
+  cellRangerOuts = "count/sample_filtered_feature_bc_matrix/",
+  class          = "Matrix"
+)
+
+```
+
+```{r}
+print(sce1)
+```
+
+```{r}
+table(colData(sce1)$sample)
+```
+
+```{r}
+# Get list of mitochondrial genes
+sce1 <- importMitoGeneSet(sce1, reference = "human", id = "ensembl",
+                         by = "rownames", collectionName = "mito")
+```
+
+
+
+# READ in SCE2
+
+```{r}
+base_dir <- "/restricted/projectnb/camplab/home/jiaqi/CTE_Batch2/outs/per_sample_outs"
+
+# This is the *parent* directory where each sample lives
+cellRangerDirs <- base_dir
+
+sampleDirs <- list(c("K1308_EC","K0982_EC","K1475_EC","K1571_EC","K1322_EC", "K1058_EC", "K1535_EC", "K0551_EC","K1087_EC","K1010_EC","K1461_EC","K1217_EC","K1457_EC","K1396_EC","K0933_EC","K1244_EC"))
+
+sampleNames <-c("K1308_EC","K0982_EC","K1475_EC","K1571_EC","K1322_EC", "K1058_EC", "K1535_EC", "K0551_EC","K1087_EC","K1010_EC","K1461_EC","K1217_EC","K1457_EC","K1396_EC","K0933_EC","K1244_EC")
+
+sampleDirs
+
+```
+
+
+```{r}
+# 2) import into a single SCE ----------------------------------------------
+
+sce2 <- importCellRanger(
+  cellRangerDirs = cellRangerDirs,
+  sampleDirs      = sampleDirs,
+  sampleNames     = sampleNames,
+  cellRangerOuts = "count/sample_filtered_feature_bc_matrix/",
+  class          = "Matrix"
+)
+
+```
+
+```{r}
+print(sce2)
+
+```
+
+```{r}
+table(colData(sce2)$sample)
+```
+
+```{r}
+# Get list of mitochondrial genes
+sce2 <- importMitoGeneSet(sce2, reference = "human", id = "ensembl",
+                         by = "rownames", collectionName = "mito")
+```
+
+
+
+# READ in SCE3: drop 1 low-count sample "K1396_CALC"
+
+```{r}
+base_dir <- "/restricted/projectnb/camplab/home/jiaqi/CTE_Batch3/outs/per_sample_outs"
+
+# This is the *parent* directory where each sample lives
+cellRangerDirs <- base_dir
+
+sampleDirs <- list(c("K1475_CALC", "K1308_CALC", "K1010_CALC", "K1244_CALC", "K0982_CALC", "K0933_CALC", "K1058_CALC", "K1535_CALC", "K0551_CALC", "K1571_CALC", "K1461_CALC", "K1322_CALC", "K1217_CALC", "K0509_CALC", "K1107_CALC"))
+
+sampleNames <-c("K1475_CALC", "K1308_CALC", "K1010_CALC", "K1244_CALC", "K0982_CALC", "K0933_CALC", "K1058_CALC", "K1535_CALC", "K0551_CALC", "K1571_CALC", "K1461_CALC", "K1322_CALC", "K1217_CALC", "K0509_CALC", "K1107_CALC")
+
+sampleDirs
+
+```
+
+```{r}
+# 2) import into a single SCE ----------------------------------------------
+
+sce3 <- importCellRanger(
+  cellRangerDirs = cellRangerDirs,
+  sampleDirs      = sampleDirs,
+  sampleNames     = sampleNames,
+  cellRangerOuts = "count/sample_filtered_feature_bc_matrix/",
+  class          = "Matrix"
+)
+
+```
+
+```{r}
+print(sce3)
+
+```
+
+```{r}
+table(colData(sce3)$sample)
+```
+
+```{r}
+# Get list of mitochondrial genes
+sce3 <- importMitoGeneSet(sce3, reference = "human", id = "ensembl",
+                         by = "rownames", collectionName = "mito")
+```
+
+
+
+# READ in SCE4: drop 1 low-count sample "K1331_DLF"
+
+```{r}
+base_dir <- "/restricted/projectnb/camplab/home/jiaqi/CTE_Batch4/outs/per_sample_outs"
+
+# This is the *parent* directory where each sample lives
+cellRangerDirs <- base_dir
+
+sampleDirs <- list(c("K1218_DLF","K1650_DLF","K1121_DLF","SLI170_DLF","K1652_DLF","K0127_DLF","K0419_DLF","K0418_DLF","K1087_DLF","K1175_DLF","SLI111_DLF","K1573_DLF","K0965_DLF","K1565_DLF","K0483_DLF"))
+
+sampleNames <-c("K1218_DLF","K1650_DLF","K1121_DLF","SLI170_DLF","K1652_DLF","K0127_DLF","K0419_DLF","K0418_DLF","K1087_DLF","K1175_DLF",
+  "SLI111_DLF","K1573_DLF","K0965_DLF","K1565_DLF","K0483_DLF")
+
+sampleDirs
+
+```
+
+
+```{r}
+# 2) import into a single SCE ----------------------------------------------
+
+sce4 <- importCellRanger(
+  cellRangerDirs = cellRangerDirs,
+  sampleDirs      = sampleDirs,
+  sampleNames     = sampleNames,
+  cellRangerOuts = "count/sample_filtered_feature_bc_matrix/",
+  class          = "Matrix"
+)
+
+```
+
+
+```{r}
+print(sce4)
+
+```
+
+```{r}
+table(colData(sce4)$sample)
+```
+
+```{r}
+# Get list of mitochondrial genes
+sce4 <- importMitoGeneSet(sce4, reference = "human", id = "ensembl",
+                         by = "rownames", collectionName = "mito")
+```
+
+
+
+# Combine the 4 sces into 1 sce object
+
+```{r}
+# 1) put the objects in a list
+sce_list <- list(b1 = sce1, b2 = sce2, b3 = sce3, b4 = sce4)
+
+# 2) keep only the safe rowData columns
+by_r <- c("feature_ID", "feature_name", "feature_type")
+
+# add an explicit batch column
+sce_list$b1$batch <- "batch1"
+sce_list$b2$batch <- "batch2"
+sce_list$b3$batch <- "batch3"
+sce_list$b4$batch <- "batch4"
+
+# 3) now combine 
+sce_all <- combineSCE(
+  sceList  = sce_list,
+  by.r     = by_r,
+  by.c     = NULL,        
+  combined = TRUE
+)
+
+```
+
+
+```{r}
+table(sce_all$batch)
+```
+
+
+```{r}
+table(sce_all$sample)
+```
+
+
+```{r}
+print(sce_all)
+```
+
+
+# Run QC
+
+```{r}
+sce_all <- runCellQC(sce_all, sample = NULL,
+                 algorithms = c("QCMetrics", "scDblFinder", "decontX"),
+                 collectionName = "mito",
+                 geneSetListLocation = "rownames")
+
+```
+
+# RUN QC UMAP
+
+```{r}
+sce_all <- getUMAP(inSCE = sce_all,  useReducedDim = NULL, useAssay = "counts", reducedDimName = "QC_UMAP", seed = 12345)
+
+```
+
+
+# Plot QC Result
+
+```{r}
+
+plotRunPerCellQCResults(sce_all)
+
+```
+
+
+# Plot doublets
+
+```{r}
+
+plotScDblFinderResults(sce_all, reducedDimName = "QC_UMAP")
+
+```
+
+
+#Plot contamination
+
+```{r}
+
+plotDecontXResults(sce_all, reducedDimName = "QC_UMAP")
+
+```
+
+
+#Generate QC result Report
+
+```{r}
+reportCellQC(sce_all)
+```
+
+
+
+#Filtering
+
+```{r}
+sce_all <- subsetSCECols(sce_all, colData = c("total > 600", "detected > 500",
+                                      "mito_percent < 5"))
+
+# See number of cells after filtering
+ncol(sce_all)
+
+```
+
+
+```{r}
+table(sce_all$batch)
+```
+
+
+```{r}
+table(sce_all$sample)
+```
+
+
+```{r}
+print(sce_all)
+```
+
+
+```{r}
+rownames(sce_all) <- rowData(sce_all)$feature_name
+sym <- rowData(sce_all)$feature_name
+rownames(sce_all) <- make.unique(sym) 
+
+```
+
+
+# Normalization
+
+```{r}
+#normalize data, use decontx
+sce_all <- runSeuratNormalizeData(inSCE = sce_all, useAssay = "decontXcounts", normAssayName = "seuratNormData")
+
+#scale data
+sce_all <- runSeuratScaleData(inSCE = sce_all, useAssay = "seuratNormData", scaledAssayName = "seuratScaledData")
+
+```
+
+
+# Variable Feature Selection
+
+```{r}
+#For each gene (row), it computes: its mean expression across cells; its variance, then “standardizes” that variance after modeling the mean–variance relationship. These statistics are stored in rowData(sce) (and/or internally for HVG).
+
+sce_all <- runSeuratFindHVG(
+  sce_all,
+  useAssay = "counts",
+  method = "vst"
+)
+
+print(getTopHVG(inSCE = sce_all, method = "vst", hvgNumber = 10))
+
+#Plot mean vs standardized variance
+#X-axis (Mean) – average expression of that gene across cells, on the transformed scale that the VST method uses (can be negative because of centering).
+#Y-axis (Standardized Variance) – how much more variable the gene is than expected given its mean (after modeling the mean–variance trend).
+#Red points = the genes selected as HVGs (e.g. top 2,000 by standardized variance
+
+plotSeuratHVG(sce_all, labelPoints = 3)
+
+```
+
+
+# Dimensionality Reduction
+
+```{r}
+
+sce_all <- runSeuratPCA(inSCE = sce_all, useAssay = "seuratScaledData", reducedDimName = "seuratPCA", nPCs = 20)
+#You see a large dense cluster on the right and an arched “tail” to the left. That suggests there are at least 2–3 major structures in the data:
+#one big group (probably a dominant cell type), plus other cells whose expression gradually differs along that arch.
+plotSeuratReduction(inSCE = sce_all, useReduction = "pca")
+
+#If QC / normalization / HVG selection were broken, you’d often see:a big fuzzy ball with no structure, or PCs dominated by a few weird outlier cells.
+
+```
+
+
+```{r}
+
+#Use PCs up to the elbow, so here something like 10 PCs is reasonable.
+plotSeuratElbow(inSCE = sce_all)
+
+```
+
+
+# UMAP
+
+```{r}
+#UMAP builds a k-NN graph in that PC space and then lays the cells out in 2D.
+sce_all <- runSeuratUMAP(inSCE = sce_all, useReduction = "pca", reducedDimName = "seuratUMAP", dims = 15)
+plotSeuratReduction(sce_all, "umap")
+
+```
+
+
+# Clustering
+
+```{r}
+sce_all <- runSeuratFindClusters(inSCE = sce_all, useAssay = "seuratScaledData", useReduction = "pca", dims = 15, algorithm = "louvain")
+plotSeuratReduction(sce_all, "pca", showLegend = TRUE)
+
+```
+
+
+# Save result into RDS
+```{r}
+saveRDS(sce_all, "/restricted/projectnb/camplab/home/jiaqi/sce_1234_QC_clustered.rds")
+```
+
