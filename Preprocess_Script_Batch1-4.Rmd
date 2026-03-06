@@ -281,7 +281,7 @@ plotScDblFinderResults(sce_all, reducedDimName = "QC_UMAP")
 ```
 
 
-#Plot contamination
+# Plot contamination
 
 ```{r}
 
@@ -290,7 +290,7 @@ plotDecontXResults(sce_all, reducedDimName = "QC_UMAP")
 ```
 
 
-#Generate QC result Report
+# Generate QC result Report
 
 ```{r}
 reportCellQC(sce_all)
@@ -298,7 +298,7 @@ reportCellQC(sce_all)
 
 
 
-#Filtering
+# Filtering
 
 ```{r}
 sce_all <- subsetSCECols(sce_all, colData = c("total > 600", "detected > 500",
